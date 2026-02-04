@@ -29,13 +29,15 @@
             margin-bottom: 40px;
             max-width: 500px; margin-left: auto; margin-right: auto;
         }
-        input, textarea { 
+        input, textarea, .photo-input + label { 
             width: 100%; padding: 15px; margin: 12px 0; 
             border: 3px solid #ff9a9e; border-radius: 15px; 
             font-size: 16px; font-family: inherit;
             transition: border-color 0.3s;
         }
-        input:focus, textarea:focus { outline: none; border-color: #e94560; box-shadow: 0 0 0 3px rgba(233,69,96,0.1); }
+        input:focus, textarea:focus, .photo-input:focus + label { 
+            outline: none; border-color: #e94560; box-shadow: 0 0 0 3px rgba(233,69,96,0.1); 
+        }
         textarea { resize: vertical; min-height: 100px; }
         .submit-btn { 
             background: linear-gradient(135deg, #e94560, #d83a50); 
@@ -50,6 +52,36 @@
             width: 100%;
         }
         .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(233,69,96,0.4); }
+        .photo-btn { 
+            background: linear-gradient(135deg, #4CAF50, #45a049) !important;
+            margin: 12px 0;
+        }
+        .photo-preview { 
+            width: 120px; height: 120px; 
+            border-radius: 15px; 
+            object-fit: cover; 
+            margin: 10px auto; 
+            border: 4px solid #ff9a9e;
+            display: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .live-counter {
+            background: linear-gradient(135deg, #2196F3, #21CBF3);
+            color: white; padding: 20px 30px;
+            border-radius: 25px; font-size: 1.5em;
+            font-weight: bold; margin: 20px 0;
+            box-shadow: 0 15px 35px rgba(33, 150, 243, 0.3);
+        }
+        .see-wishes-btn {
+            background: linear-gradient(135deg, #FF9800, #F57C00);
+            color: white; padding: 18px 40px;
+            border: none; border-radius: 15px;
+            font-size: 18px; font-weight: bold;
+            cursor: pointer; margin: 30px 0;
+            text-decoration: none; display: inline-block;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .see-wishes-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(255,152,0,0.4); }
         .success { 
             background: linear-gradient(135deg, #d4edda, #c3e6cb); 
             color: #155724; 
@@ -60,7 +92,7 @@
             animation: slideIn 0.5s ease;
         }
         @keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        .wishes-section { text-align: left; }
+        .wishes-section { text-align: left; display: none; }
         .wishes-header { 
             background: white; padding: 25px; border-radius: 20px; 
             margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
@@ -74,25 +106,33 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
             animation: fadeInUp 0.5s ease forwards;
             opacity: 0; transform: translateY(20px);
+            text-align: center;
         }
         .wish-card:nth-child(even) { background: linear-gradient(135deg, #fff 0%, #f8f9ff 100%); }
         @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
         .wish-name { color: #e94560; font-size: 1.4em; margin-bottom: 10px; }
         .wish-message { line-height: 1.6; margin-bottom: 15px; color: #444; }
         .wish-time { color: #888; font-size: 0.9em; }
-        .count { color: #e94560; font-weight: bold; font-size: 1.2em; }
-        .expired { background: #ffebee; color: #c62828; padding: 40px; border-radius: 20px; font-size: 1.5em; }
+        .photo-wish { width: 100px; height: 100px; border-radius: 15px; object-fit: cover; margin: 0 auto 15px; border: 3px solid #ff9a9e; }
         @media (max-width: 600px) { .form-card { padding: 25px 20px; } }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎂 Happy Birthday🎈<br> Dipti Vegada</h1>
-        <p class="subtitle">Leave your special wishes! ✨ (Live till Feb 6)</p>
+        <p class="subtitle">Leave your special wishes with photo! ✨</p>
+        
+        <div class="live-counter">
+            🎉 <span id="wishCount">0</span> Live Wishes!
+        </div>
         
         <div id="formSection">
             <div class="form-card">
                 <form id="wishForm">
+                    <input type="file" id="photo" class="photo-input" accept="image/*" capture="environment">
+                    <label for="photo" class="submit-btn photo-btn">📸 Add Birthday Photo</label>
+                    <img id="photoPreview" class="photo-preview" alt="Photo preview">
+                    
                     <input type="text" id="name" placeholder="Your Name *" maxlength="50" required>
                     <textarea id="message" placeholder="Write your birthday wishes here... 💌" maxlength="500" required></textarea>
                     <button type="submit" class="submit-btn">Send Birthday Wish! 🎁</button>
@@ -100,89 +140,133 @@
             </div>
         </div>
         
-        <div id="successMsg" class="success" style="display: none;">Thank you! Your wish is sparkling now! ✨</div>
+        <div id="successMsg" class="success" style="display: none;">
+            Thank you! Your wish with photo is live now! ✨
+        </div>
         
-        <div class="wishes-section">
+        <button id="seeWishesBtn" class="see-wishes-btn" style="display: none;">
+            👀 See All <span id="wishCountLink">0</span> Wishes
+        </button>
+        
+        <div class="wishes-section" id="wishesSection">
             <div class="wishes-header">
-                <h2>🎉 <span id="wishCount">0</span> Wishes Received</h2>
+                <h2>🎉 All <span id="wishCountAll">0</span> Birthday Wishes</h2>
             </div>
             <div id="wishesContainer"></div>
         </div>
     </div>
-    
+
     <script>
-    const IST_TIMEZONE = 'Asia/Kolkata';
-    const BIRTHDAY_START = '2026-02-04T00:00:00+05:30';
-    const BIRTHDAY_END = '2026-02-07T23:59:59+05:30';
-    const STORAGE_KEY = 'birthdayWishesDipti2026';
+        const IST_TIMEZONE = 'Asia/Kolkata';
+        const BIRTHDAY_START = '2026-02-04T00:00:00+05:30';
+        const BIRTHDAY_END = '2026-02-07T23:59:59+05:30';
+        const STORAGE_KEY = 'birthdayWishesDipti2026';
 
-    const now = new Date();
-    const startDate = new Date(BIRTHDAY_START);
-    const endDate = new Date(BIRTHDAY_END);
+        const now = new Date();
+        const startDate = new Date(BIRTHDAY_START);
+        const endDate = new Date(BIRTHDAY_END);
 
-    if (now < startDate || now > endDate) {
-        document.getElementById('formSection').style.display = 'none';
-        document.querySelector('.subtitle').innerHTML = '🎉 Event Live: Feb 4-7 IST<br>Come back during the event!';
-        document.body.style.background = '#ffebee';
-    }
-
-    let wishes = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-
-    // ✅ THIS ADDS 5 DEMO WISHES IMMEDIATELY
-    if (wishes.length === 0) {
-        wishes = [
-            {id:1, name:'Priya 🎂', message:'Happy Birthday Dipti! You deserve all happiness!', date:'4 Feb, 8:30 PM'},
-            {id:2, name:'Rohan 💝', message:'Amazing day ahead! Best wishes always!', date:'4 Feb, 8:45 PM'},
-            {id:3, name:'Mom ❤️', message:'God bless my dearest child always!', date:'4 Feb, 7:55 PM'},
-            {id:4, name:'Amit bro 🔥', message:'Legendary bday for legendary person!', date:'4 Feb, 9:00 PM'},
-            {id:5, name:'Sneha ✨', message:'Shine bright like you always do!', date:'4 Feb, 9:15 PM'}
-        ];
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(wishes));
-    }
-
-    function displayWishes() {
-        const container = document.getElementById('wishesContainer');
-        const countEl = document.getElementById('wishCount');
-        countEl.textContent = wishes.length;
-        
-        container.innerHTML = wishes.map((wish, index) => `
-            <div class="wish-card" style="animation-delay: ${index * 0.1}s">
-                <div class="wish-name">🎉 ${wish.name}</div>
-                <div class="wish-message">${wish.message.replace(/
-/g, '<br>')}</div>
-                <div class="wish-time">${wish.date}</div>
-            </div>
-        `).join('');
-    }
-
-    displayWishes(); // ✅ SHOWS 5 WISHES IMMEDIATELY
-
-    document.getElementById('wishForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const name = document.getElementById('name').value.trim();
-        const message = document.getElementById('message').value.trim();
-        
-        if (name && message) {
-            const wish = {
-                id: Date.now(),
-                name: name,
-                message: message,
-                date: new Date().toLocaleString('en-IN', { 
-                    timeZone: IST_TIMEZONE,
-                    day: 'numeric', month: 'short', 
-                    hour: '2-digit', minute: '2-digit'
-                })
-            };
-            wishes.unshift(wish);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(wishes));
-            displayWishes();
-            document.getElementById('successMsg').style.display = 'block';
-            setTimeout(() => document.getElementById('successMsg').style.display = 'none', 3000);
-            this.reset();
+        if (now < startDate || now > endDate) {
+            document.getElementById('formSection').style.display = 'none';
+            document.querySelector('.subtitle').innerHTML = '🎉 Event Live: Feb 4-7 IST<br>Come back during the event!';
+            document.body.style.background = '#ffebee';
         }
-    });
+
+        let wishes = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        let currentPhotoFile = null;
+
+        // ✅ 5 DEMO WISHES (FIXED - shows immediately)
+        if (wishes.length === 0) {
+            wishes = [
+                {id:1, name:'Priya 🎂', photo:null, message:'Happy Birthday Dipti! You deserve all happiness!', date:'4 Feb, 8:30 PM'},
+                {id:2, name:'Rohan 💝', photo:null, message:'Amazing day ahead! Best wishes always!', date:'4 Feb, 8:45 PM'},
+                {id:3, name:'Mom ❤️', photo:null, message:'God bless my dearest child always!', date:'4 Feb, 9:00 PM'},
+                {id:4, name:'Amit bro 🔥', photo:null, message:'Legendary bday for legendary person!', date:'4 Feb, 9:15 PM'},
+                {id:5, name:'Sneha ✨', photo:null, message:'Shine bright like you always do!', date:'4 Feb, 9:30 PM'}
+            ];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(wishes));
+        }
+
+        function updateCounters() {
+            const count = wishes.length;
+            document.getElementById('wishCount').textContent = count;
+            document.getElementById('wishCountLink').textContent = count;
+            document.getElementById('wishCountAll').textContent = count;
+            document.getElementById('seeWishesBtn').style.display = count > 0 ? 'inline-block' : 'none';
+        }
+
+        function displayWishes() {
+            const container = document.getElementById('wishesContainer');
+            container.innerHTML = wishes.map((wish, index) => `
+                <div class="wish-card" style="animation-delay: ${index * 0.1}s">
+                    ${wish.photo ? `<img src="${wish.photo}" class="photo-wish" alt="Wish photo">` : ''}
+                    <div class="wish-name">🎉 ${wish.name}</div>
+                    <div class="wish-message">${wish.message.replace(/
+/g, '<br>')}</div>
+                    <div class="wish-time">${wish.date}</div>
+                </div>
+            `).join('');
+        }
+
+        // Photo preview
+        document.getElementById('photo').addEventListener('change', function(e) {
+            currentPhotoFile = e.target.files[0];
+            const preview = document.getElementById('photoPreview');
+            if (currentPhotoFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(currentPhotoFile);
+            }
+        });
+
+        // Form submit
+        document.getElementById('wishForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value.trim();
+            const message = document.getElementById('message').value.trim();
+            
+            if (name && message) {
+                const wish = {
+                    id: Date.now(),
+                    name: name,
+                    photo: currentPhotoFile ? URL.createObjectURL(currentPhotoFile) : null,
+                    message: message,
+                    date: new Date().toLocaleString('en-IN', { 
+                        timeZone: IST_TIMEZONE,
+                        day: 'numeric', month: 'short', 
+                        hour: '2-digit', minute: '2-digit'
+                    })
+                };
+                
+                wishes.unshift(wish);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(wishes));
+                
+                updateCounters();
+                displayWishes();
+                document.getElementById('wishesSection').style.display = 'block';
+                document.getElementById('wishesSection').scrollIntoView({behavior: 'smooth'});
+                
+                document.getElementById('successMsg').style.display = 'block';
+                setTimeout(() => document.getElementById('successMsg').style.display = 'none', 3000);
+                
+                this.reset();
+                document.getElementById('photoPreview').style.display = 'none';
+                currentPhotoFile = null;
+            }
+        });
+
+        // See all wishes
+        document.getElementById('seeWishesBtn').addEventListener('click', function() {
+            document.getElementById('wishesSection').style.display = 'block';
+            document.getElementById('wishesSection').scrollIntoView({behavior: 'smooth'});
+        });
+
+        // Initialize - 5 wishes show immediately!
+        updateCounters();
+        displayWishes();
     </script>
-
-
 </body>
 </html>
