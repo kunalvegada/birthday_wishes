@@ -86,8 +86,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎂 Happy Birthday! 🎈</h1>
-        <p class="subtitle">Leave your special wishes! ✨ (Live till Feb 6)</p>
+        <h1>🎂 Happy Birthday ! 🎈<br> Dipti Vegada </h1>
+        <p class="subtitle">Leave your special wishes! ✨ (Live till Feb 6 202)</p>
         
         <div id="formSection">
             <div class="form-card">
@@ -110,5 +110,68 @@
     </div>
 
     <script>
-        const BIRTHDAY_START = '2026-02-05';
+    const BIRTHDAY_START = '2026-02-05';
+    const BIRTHDAY_END = '2026-02-06'; 
+    const STORAGE_KEY = 'birthdayWishes2026';
+
+    // Check date (Feb 4 shows "come tomorrow" - CORRECT!)
+    const now = new Date();
+    const startDate = new Date(BIRTHDAY_START);
+    const endDate = new Date(BIRTHDAY_END + 'T23:59:59');
+    
+    if (now < startDate || now > endDate) {
+        document.getElementById('formSection').style.display = 'none';
+        document.querySelector('.subtitle').textContent = `🎉 Party Over! (${BIRTHDAY_START} to ${BIRTHDAY_END})`;
+    }
+
+    let wishes = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+    // 🎉 ADD THESE 5 FAKE WISHES FOR DEMO
+    if (wishes.length === 0) {
+        wishes = [
+            {id:1, name:'Priya 🎂', message:'Happy Birthday dear! You deserve all the happiness!', date:'Feb 5, 10:30 AM'},
+            {id:2, name:'Rohan 💝', message:'Have an amazing day! Best wishes always!', date:'Feb 5, 11:15 AM'},
+            {id:3, name:'Mom ❤️', message:'My dearest child, God bless you always!', date:'Feb 5, 9:45 AM'},
+            {id:4, name:'Amit bro 🔥', message:'Legendary birthday for legendary person!', date:'Feb 5, 12:20 PM'},
+            {id:5, name:'Sneha ✨', message:'Shine bright like always! Love you!', date:'Feb 5, 1:05 PM'}
+        ];
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(wishes));
+    }
+
+    displayWishes();
+
+    document.getElementById('wishForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const name = document.getElementById('name').value.trim();
+        const message = document.getElementById('message').value.trim();
         
+        if (name && message) {
+            const wish = {
+                id: Date.now(),
+                name,
+                message,
+                date: now.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })
+            };
+            wishes.unshift(wish);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(wishes));
+            displayWishes();
+            document.getElementById('successMsg').style.display = 'block';
+            setTimeout(() => document.getElementById('successMsg').style.display = 'none', 3000);
+            this.reset();
+        }
+    });
+
+    function displayWishes() {
+        const container = document.getElementById('wishesContainer');
+        document.getElementById('wishCount').textContent = wishes.length;
+        
+        container.innerHTML = wishes.map((wish, index) => `
+            <div class="wish-card" style="animation-delay: ${index * 0.1}s">
+                <div class="wish-name">🎉 ${wish.name}</div>
+                <div class="wish-message">${wish.message.replace(/
+/g, '<br>')}</div>
+                <div class="wish-time">${wish.date}</div>
+            </div>
+        `).join('');
+    }
+</script>
